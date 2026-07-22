@@ -1,0 +1,35 @@
+القسم	النوع	المسار (Endpoint)	الوصف
+المصادقة (Auth)	POST	/api/auth/register	تسجيل مستخدم جديد
+POST	/api/auth/login	تسجيل دخول (يُرجع Token)
+GET	/api/auth/me	جلب بيانات المستخدم الحالي (🔒)
+PUT	/api/auth/me	تحديث بيانات الملف الشخصي (🔒)
+المتجر (Store)	GET	/api/store/products	عرض المنتجات (مع بحث وفلترة)
+GET	/api/store/products/:id	تفاصيل منتج معين
+GET	/api/store/products/featured	المنتجات المميزة (للصفحة الرئيسية)
+GET	/api/store/categories	قائمة الفئات وعدد المنتجات
+الطلبات (Orders)	POST	/api/orders	إتمام عملية الشراء (Checkout)
+GET	/api/orders/my/history	سجل طلبات العميل (🔒)
+GET	/api/orders/:id	تتبع طلب معين
+لوحة التحكم (Admin)	GET	/api/admin/dashboard	إحصائيات لوحة التحكم (🔒 Admin)
+GET	/api/admin/products	إدارة المنتجات (CRUD) (🔒 Admin)
+GET	/api/admin/users	إدارة المستخدمين (🔒 Admin)
+GET	/api/admin/orders	إدارة الطلبات وتغيير حالتها (🔒 Admin)
+🚀 خطوات التشغيل لتجربة التصميم:
+تثبيت المكاتب (إذا لم تكن مثبتة):
+powershell
+npm install
+إضافة البيانات التجريبية (Data Seed): هذا الأمر سيملأ قاعدة البيانات بمنتجات ملابس حقيقية وصور من Unsplash مطابقة للديزاين:
+powershell
+node src/scripts/seedData.js
+تشغيل السيرفر:
+powershell
+npm run dev
+🔑 بيانات الدخول للتجربة:
+الأدمن (Admin): admin@store.com | الباسورد: Admin@123456
+مستخدم عادي (User): sarah@example.com | الباسورد: Password123
+يمكنك الآن البدء في بناء الـ Front-end وربطه بهذه المسارات مباشرة! هل تحتاج مساعدة في كود الـ Front-end أ
+GET	/api/reviews/product/:productId	جلب تعليقات منتج (مع pagination + sort)	Public
+POST	/api/reviews/product/:productId	إضافة تعليق	🔒 مسجل
+PUT	/api/reviews/:reviewId	تعديل تعليق	🔒 صاحبه
+DELETE	/api/reviews/:reviewId	حذف تعليق	🔒 صاحبه/أدمن
+GET	/api/reviews/product/:productId/summary

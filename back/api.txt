@@ -1,0 +1,31 @@
+أهلاً بك، إليك قائمة بأسماء المتغيرات (Parameters) لكل الـ APIs الموجودة في المشروع مقسمة حسب النوع:
+
+1. نظام الحسابات (Authentication - /api/auth)
+تسجيل مستخدم جديد (POST /register):
+name, email, password, phone, address
+تسجيل الدخول (POST /login):
+email, password
+تحديث الملف الشخصي (PUT /me):
+name, phone, address, avatar
+تغيير كلمة المرور (PUT /change-password):
+currentPassword, newPassword
+2. المنتجات (Products - /api/products)
+جلب المنتجات (GET / - Query Params):
+category, q (بحث), priceMin, priceMax, sort, inStock
+إضافة منتج (POST /):
+name, price, category, description, image, sizes, colors
+3. الطلبات (Orders - /api/orders)
+إنشاء طلب جديد (POST /):
+customer: { name, email, phone, address }
+items: مصفوفة تحتوي على [{ product, quantity, size, color, price }]
+subtotal, shippingCost, totalAmount, paymentMethod, notes
+4. لوحة تحكم الأدمن (Admin - /api/admin)
+إدارة المنتجات:
+إضافة/تعديل: name, price, category, description, image, images, sizes, colors, stockCount, isNew, isSale, isFeatured
+إدارة المستخدمين (PUT /users/:id):
+isActive (تفعيل/تعطيل), isAdmin, name, phone, address
+إدارة الطلبات (PUT /orders/:id):
+status (حالة الطلب), isPaid, notes
+ملاحظة: المسارات التي تبدأ بـ GET وتأخذ متغير في الرابط مثل /:id تعني أنها تأخذ معرّف (ID) العنصر (المنتج أو الطلب أو المستخدم).
+
+لقد قمت بتحليل الملفات التالية لاستخراج هذه البيانات

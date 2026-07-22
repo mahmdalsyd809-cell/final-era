@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #00332B;
+  --color-primary-light: #004D41;
+  --color-secondary: #F7F7F7;
+  --color-accent: #D14D4D;
+  
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', serif;
+}
+
+:root {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif), serif;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scrollDown {
+  0% { transform: translateY(-100%); }
+  50% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+/* Toast slide-in animation */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Mobile menu slide-in */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.animate-scroll-down {
+  animation: scrollDown 2s infinite ease-in-out;
+}
+
+/* Page transition */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+
+}
+
+/* Stagger children fade-in */
+@keyframes itemFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.stagger-item {
+  opacity: 0;
+  animation: itemFadeUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0.05s; }
+.stagger-item:nth-child(2) { animation-delay: 0.10s; }
+.stagger-item:nth-child(3) { animation-delay: 0.15s; }
+.stagger-item:nth-child(4) { animation-delay: 0.20s; }
+.stagger-item:nth-child(5) { animation-delay: 0.25s; }
+.stagger-item:nth-child(6) { animation-delay: 0.30s; }
+.stagger-item:nth-child(7) { animation-delay: 0.35s; }
+.stagger-item:nth-child(8) { animation-delay: 0.40s; }
+
+/* ===== Login Page — Animated Blur Background ===== */
+.login-bg {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 50%, #dfe6ed -100%);
+}
+
+.login-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.login-orb-1 {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, #00796B 0%, #004D41 60%, transparent 100%);
+  top: -80px;
+  left: -60px;
+  animation: orbFloat1 18s ease-in-out infinite;
+}
+
+.login-orb-2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #D14D4D 0%, #a33a3a 60%, transparent 100%);
+  bottom: -60px;
+  right: -40px;
+  animation: orbFloat2 20s ease-in-out infinite;
+}
+
+.login-orb-3 {
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, #1a1a2e 0%, #16213e 60%, transparent 100%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: orbFloat3 16s ease-in-out infinite;
+}
+
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%      { transform: translate(60px, 40px) scale(1.08); }
+  50%      { transform: translate(30px, 80px) scale(0.95); }
+  75%      { transform: translate(-30px, 50px) scale(1.05); }
+}
+
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%      { transform: translate(-50px, -30px) scale(1.06); }
+  50%      { transform: translate(-20px, -70px) scale(0.96); }
+  75%      { transform: translate(40px, -40px) scale(1.04); }
+}
+
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  33%      { transform: translate(-40%, -60%) scale(1.1); }
+  66%      { transform: translate(-55%, -45%) scale(0.92); }
+}
+
+/* ===== Login Card Pop Animation ===== */
+@keyframes cardPop {
+  0%   { opacity: 0; transform: scale(0.85) translateY(30px); }
+  50%  { transform: scale(1.02) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.login-card {
+  animation: cardPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ===== Guest Login Overlay + Arrow ===== */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+  animation: overlayFadeIn 0.3s ease-out both;
+}
+
+.login-btn-highlight {
+  position: relative;
+  z-index: 9999 !important;
+}
+
+.login-arrow-indicator {
+  position: fixed;
+  z-index: 9999;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: arrowFadeIn 0.4s ease-out both;
+}
+
+.login-arrow-indicator svg {
+  animation: arrowBounce 0.9s ease-in-out infinite;
+  filter: drop-shadow(0 2px 12px rgba(255, 255, 255, 0.4));
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(12px); }
+}
+
+@keyframes arrowFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== Reviews Page Styles ===== */
+.review-card {
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+.review-card:hover {
+  transform: translateY(-2px);
+}
+
+.review-summary-card {
+  position: sticky;
+  top: 6rem;
+}
+
+/* ===== Product Carousel — Hide Scrollbar ===== */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== Marquee Animation ===== */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+}
