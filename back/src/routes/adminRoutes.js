@@ -106,7 +106,7 @@ router.get('/products/:id', async (req, res) => {
  * @route   POST /api/admin/products
  * @desc    إضافة منتج جديد
  * @body    { name, price, category, description?, image?, images?,
- *            sizes?, colors?, stockCount?, isNew?, isSale?, isFeatured? }
+ *            sizes?, colors?, stockCount?, isNewProduct?, isSale?, isFeatured? }
  */
 router.post('/products', async (req, res) => {
   try {

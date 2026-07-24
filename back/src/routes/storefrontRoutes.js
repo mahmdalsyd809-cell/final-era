@@ -47,7 +47,7 @@ router.get('/products', async (req, res) => {
 
     if (category) {
       if (category.toLowerCase() === 'new') {
-        filter.isNew = true;
+        filter.isNewProduct = true;
       } else {
         filter.category = category.toLowerCase();
       }
@@ -123,7 +123,7 @@ router.get('/products/featured', async (req, res) => {
 router.get('/products/new-arrivals', async (req, res) => {
   try {
     const limit = Math.min(20, Number(req.query.limit) || 8);
-    const products = await Product.find({ isNew: true, inStock: true })
+    const products = await Product.find({ isNewProduct: true, inStock: true })
       .sort({ createdAt: -1 })
       .limit(limit);
     res.json(products);

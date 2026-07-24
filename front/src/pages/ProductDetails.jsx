@@ -285,7 +285,7 @@ const ProductDetails = () => {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     {/* Badge للمنتج الجديد أو الخصم */}
-                    {item.isNew && (
+                    {item.isNewProduct && (
                       <span className="absolute top-3 left-3 bg-gray-900 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1">
                         New
                       </span>

@@ -26,7 +26,7 @@ const products = [
     stockCount: 15,
     rating: 4.8,
     numReviews: 124,
-    isNew: false,
+    isNewProduct: false,
     isSale: true,
     isFeatured: true
   },
@@ -48,7 +48,7 @@ const products = [
     stockCount: 8,
     rating: 4.9,
     numReviews: 87,
-    isNew: true,
+    isNewProduct: true,
     isSale: false,
     isFeatured: true
   },
@@ -69,7 +69,7 @@ const products = [
     stockCount: 22,
     rating: 4.7,
     numReviews: 63,
-    isNew: false,
+    isNewProduct: false,
     isSale: true,
     isFeatured: false
   },
@@ -91,7 +91,7 @@ const products = [
     stockCount: 12,
     rating: 4.6,
     numReviews: 45,
-    isNew: true,
+    isNewProduct: true,
     isSale: false,
     isFeatured: true
   },
@@ -112,7 +112,7 @@ const products = [
     stockCount: 30,
     rating: 4.5,
     numReviews: 92,
-    isNew: false,
+    isNewProduct: false,
     isSale: false,
     isFeatured: true
   },
@@ -133,7 +133,7 @@ const products = [
     stockCount: 18,
     rating: 4.4,
     numReviews: 38,
-    isNew: true,
+    isNewProduct: true,
     isSale: true,
     isFeatured: false
   },
@@ -154,7 +154,7 @@ const products = [
     stockCount: 40,
     rating: 4.7,
     numReviews: 55,
-    isNew: false,
+    isNewProduct: false,
     isSale: false,
     isFeatured: false
   },
@@ -175,7 +175,7 @@ const products = [
     stockCount: 10,
     rating: 4.8,
     numReviews: 72,
-    isNew: true,
+    isNewProduct: true,
     isSale: false,
     isFeatured: true
   },
@@ -196,7 +196,7 @@ const products = [
     stockCount: 25,
     rating: 4.3,
     numReviews: 110,
-    isNew: false,
+    isNewProduct: false,
     isSale: false,
     isFeatured: false
   },
@@ -217,7 +217,7 @@ const products = [
     stockCount: 7,
     rating: 4.9,
     numReviews: 34,
-    isNew: false,
+    isNewProduct: false,
     isSale: true,
     isFeatured: true
   },
@@ -238,7 +238,7 @@ const products = [
     stockCount: 14,
     rating: 4.6,
     numReviews: 48,
-    isNew: true,
+    isNewProduct: true,
     isSale: false,
     isFeatured: true
   },
@@ -259,7 +259,7 @@ const products = [
     stockCount: 35,
     rating: 4.4,
     numReviews: 76,
-    isNew: false,
+    isNewProduct: false,
     isSale: false,
     isFeatured: false
   }

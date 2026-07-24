@@ -26,7 +26,7 @@ router.get('/', protect, async (req, res) => {
   try {
     // جلب المستخدم مع populate للمنتجات المفضلة
     const user = await User.findById(req.user._id)
-      .populate('wishlist', 'name price image category isNew isSale');
+      .populate('wishlist', 'name price image category isNewProduct isSale');
 
     res.json({ wishlist: user.wishlist || [] });
   } catch (error) {

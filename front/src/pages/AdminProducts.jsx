@@ -19,10 +19,20 @@ import suitUrl   from '../assets/formal_suit.png';
 // ====== Modal إضافة منتج جديد أو تعديله ======
 const AddProductModal = ({ onClose, onSuccess, initialData = null }) => {
   const fileRef = useRef();
+  const multiFileRef = useRef();
+  
   const [saving, setSaving]       = useState(false);
   const [uploading, setUploading] = useState(false);
+  
   const [preview, setPreview]     = useState(initialData?.image ? getImageUrl(initialData.image) : null);
-  const [imageFile, setImageFile] = useState(null); // الملف الفعلي للرفع
+  const [imageFile, setImageFile] = useState(null);
+  
+  const [extraPreviews, setExtraPreviews] = useState(initialData?.images?.length ? initialData.images.map(getImageUrl) : []);
+  const [extraFiles, setExtraFiles] = useState([]);
+  
+  const [colors, setColors] = useState(initialData?.colors || []);
+  const [colorInput, setColorInput] = useState('#ffffff');
+  
   const [form, setForm] = useState(initialData ? {
     name: initialData.name || '',
     category: initialData.category || 'Apparel',
@@ -31,40 +41,69 @@ const AddProductModal = ({ onClose, onSuccess, initialData = null }) => {
     stockCount: initialData.stockCount || '',
     description: initialData.description || '',
     image: initialData.image || '',
+    images: initialData.images || [],
   } : {
     name: '', category: 'Apparel', sku: '',
-    price: '', stockCount: '', description: '', image: '',
+    price: '', stockCount: '', description: '', image: '', images: [],
   });
 
   const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
 
-  // معاينة الصورة بعد اختيارها (بدون رفع بعد)
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // التحقق من الحجم (5 ميجا كحد أقصى)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت');
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    setImageFile(file); // نحفظ الملف الفعلي
+    if (file.size > 5 * 1024 * 1024) return alert('حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت');
+    setPreview(URL.createObjectURL(file));
+    setImageFile(file);
   };
+  
+  const handleExtraFiles = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const validFiles = files.filter(f => f.size <= 5 * 1024 * 1024);
+    if (validFiles.length < files.length) alert('تم تجاهل بعض الصور بسبب الحجم');
+    
+    setExtraPreviews(prev => [...prev, ...validFiles.map(f => URL.createObjectURL(f))]);
+    setExtraFiles(prev => [...prev, ...validFiles]);
+  };
+  
+  const removeExtraImage = (index) => {
+    setExtraPreviews(prev => prev.filter((_, i) => i !== index));
+    if (index >= form.images.length) {
+      setExtraFiles(prev => prev.filter((_, i) => i !== (index - form.images.length)));
+    } else {
+      setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+    }
+  };
+  
+  const addColor = () => {
+    if (!colors.includes(colorInput)) setColors([...colors, colorInput]);
+  };
+  const removeColor = (col) => setColors(colors.filter(c => c !== col));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       let imageUrl = form.image;
-
-      // لو في ملف صورة جديد، نرفعه أولاً للسيرفر
+      
       if (imageFile) {
         setUploading(true);
         const uploadRes = await adminApi.uploadImage(imageFile);
-        imageUrl = uploadRes.url; // مثال: "/uploads/products/123456.jpg"
-        setUploading(false);
+        imageUrl = uploadRes.url;
       }
+      
+      let uploadedExtra = [];
+      if (extraFiles.length > 0) {
+        setUploading(true);
+        for (const file of extraFiles) {
+          const res = await adminApi.uploadImage(file);
+          uploadedExtra.push(res.url);
+        }
+      }
+      setUploading(false);
+      
+      const finalImages = [...form.images, ...uploadedExtra];
 
       await adminApi.saveProduct(initialData?._id || initialData?.id || null, {
         name:        form.name,
@@ -73,14 +112,14 @@ const AddProductModal = ({ onClose, onSuccess, initialData = null }) => {
         stockCount:  Number(form.stockCount),
         description: form.description,
         image:       imageUrl,
-        sizes:  ['S','M','L','XL'],
-        colors: ['Black'],
+        images:      finalImages,
+        sizes:       ['S','M','L','XL'],
+        colors:      colors,
       });
       onSuccess?.();
       onClose();
     } catch (err) {
       setUploading(false);
-      console.error('خطأ في حفظ المنتج:', err.message);
       alert('Error: ' + err.message);
     } finally {
       setSaving(false);
@@ -167,35 +206,93 @@ const AddProductModal = ({ onClose, onSuccess, initialData = null }) => {
                   className="w-full border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition-colors resize-none"
                 />
               </div>
+
+              {/* Colors Picker */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Colors (Hex)</label>
+                <div className="flex items-center gap-3 mb-3">
+                  <input 
+                    type="color" 
+                    value={colorInput} 
+                    onChange={e => setColorInput(e.target.value)}
+                    className="w-10 h-10 p-0 border-0 cursor-pointer"
+                  />
+                  <input 
+                    type="text" 
+                    value={colorInput} 
+                    onChange={e => setColorInput(e.target.value)}
+                    className="border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-gray-900 transition-colors w-24 uppercase"
+                  />
+                  <button 
+                    type="button" onClick={addColor}
+                    className="bg-gray-900 text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map(col => (
+                    <div key={col} className="flex items-center gap-1 border border-gray-200 px-2 py-1 rounded-sm">
+                      <div className="w-3 h-3 rounded-full border border-gray-300" style={{ backgroundColor: col }} />
+                      <span className="text-xs uppercase text-gray-600">{col}</span>
+                      <button type="button" onClick={() => removeColor(col)} className="text-gray-400 hover:text-red-500 ml-1">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* === العمود الأيمن: رفع الصورة === */}
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Image Upload</label>
-              <div
-                onClick={() => fileRef.current.click()}
-                className="border-2 border-dashed border-gray-200 rounded-sm aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden"
-              >
-                {preview ? (
-                  <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-center p-6">
-                    <Upload size={28} className="mx-auto text-gray-300 mb-3" />
-                    <p className="text-xs text-gray-400">Drag &amp; Drop</p>
-                    <p className="text-[10px] text-gray-300 mt-1">Product image here</p>
-                    <p className="text-[10px] text-gray-300">or</p>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 underline cursor-pointer">Browse</span>
-                  </div>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Main Image</label>
+                <div
+                  onClick={() => fileRef.current.click()}
+                  className="border-2 border-dashed border-gray-200 rounded-sm aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden"
+                >
+                  {preview ? (
+                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center p-6">
+                      <Upload size={28} className="mx-auto text-gray-300 mb-3" />
+                      <p className="text-[10px] text-gray-500 font-bold uppercase">Main Image</p>
+                    </div>
+                  )}
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+                {preview && (
+                  <button type="button" onClick={() => { setPreview(null); setImageFile(null); setForm(p => ({...p, image:''})); }}
+                    className="mt-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Remove main image
+                  </button>
                 )}
               </div>
-              <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-              {preview && (
-                <button type="button" onClick={() => { setPreview(null); setImageFile(null); setForm(p => ({...p, image:''})); }}
-                  className="mt-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Remove image
-                </button>
-              )}
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Extra Images</label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {extraPreviews.map((src, i) => (
+                    <div key={i} className="relative aspect-square border border-gray-200 rounded-sm overflow-hidden group">
+                      <img src={src} className="w-full h-full object-cover" alt="Extra" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button type="button" onClick={() => removeExtraImage(i)} className="text-white hover:text-red-400">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <div
+                    onClick={() => multiFileRef.current.click()}
+                    className="aspect-square border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+                  >
+                    <Plus size={20} className="text-gray-300" />
+                  </div>
+                </div>
+                <input ref={multiFileRef} type="file" accept="image/*" multiple onChange={handleExtraFiles} className="hidden" />
+              </div>
             </div>
           </div>
 
@@ -457,15 +554,32 @@ const AdminProducts = () => {
 
                     {/* أزرار التحكم */}
                     <td className="px-6 py-4">
-                      <button 
-                        onClick={() => {
-                          setEditingProduct(product);
-                          setShowModal(true);
-                        }}
-                        className="text-xs font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
-                      >
-                        <Edit2 size={14} /> Edit
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setShowModal(true);
+                          }}
+                          className="text-xs font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                        >
+                          <Edit2 size={14} /> Edit
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm('Are you sure you want to delete this product?')) {
+                              try {
+                                await adminApi.deleteProduct(product._id || product.id);
+                                loadProducts();
+                              } catch (err) {
+                                alert('Error deleting product');
+                              }
+                            }
+                          }}
+                          className="text-xs font-bold uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors flex items-center gap-1"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

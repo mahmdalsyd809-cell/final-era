@@ -138,11 +138,14 @@ export const adminApi = {
   getProducts: () => axiosInstance.get('/admin/products'),
 
   // إضافة أو تعديل منتج
-  // البيانات: name, price, category, description, image, images, sizes, colors, stockCount, isNew, isSale, isFeatured
+  // البيانات: name, price, category, description, image, images, sizes, colors, stockCount, isNewProduct, isSale, isFeatured
   saveProduct: (id, productData) =>
     id
       ? axiosInstance.put(`/admin/products/${id}`, productData)
       : axiosInstance.post('/admin/products', productData),
+      
+  // حذف منتج
+  deleteProduct: (id) => axiosInstance.delete(`/admin/products/${id}`),
 
   // جلب جميع المستخدمين
   getUsers: () => axiosInstance.get('/admin/users'),

@@ -102,8 +102,7 @@ const productSchema = new mongoose.Schema(
     },
 
     // ── علامات مميزة ───────────────────────────────────
-    // هل هو منتج جديد؟ (NEW badge)
-    isNew: {
+    isNewProduct: {
       type: Boolean,
       default: false
     },
