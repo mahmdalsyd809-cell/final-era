@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import { WishlistProvider } from './context/WishlistContext'
 import Home from './pages/Home'
+import AboutUs from './pages/AboutUs'
 import Login from './pages/Login'
 import ProductListing from './pages/ProductListing'
 import ProductDetails from './pages/ProductDetails'
@@ -30,6 +31,7 @@ const AnimatedRoutes = () => {
     <div key={location.pathname} className="page-enter">
       <Routes location={location}>
         <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/about" element={<AboutUs />} />
         <Route path="/shop" element={<ProductListing />} />
         <Route path="/products" element={<ProductListing />} />
         <Route path="/product/random" element={<RandomProduct />} />

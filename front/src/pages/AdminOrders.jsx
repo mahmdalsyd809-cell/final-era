@@ -1,71 +1,67 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ShoppingCart, Package, Users,
-  Settings, LogOut, Search, MoreVertical, Store
+  Search, Settings, Menu, X, Check
 } from 'lucide-react';
-import { adminApi, getImageUrl } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { adminApi } from '../services/api';
+import AdminSidebar from '../components/AdminSidebar';
+import { createPortal } from 'react-dom';
 
-// ====== مكوّن Sidebar مشترك مع الداشبورد ======
-const Sidebar = ({ active }) => {
-  const navigate  = useNavigate();
-  const { userName: adminName, logout } = useAuth();
+// ====== Modal تحديث حالة الطلب ======
+const UpdateStatusModal = ({ order, onClose, onSuccess }) => {
+  const [status, setStatus] = useState(order?.status || 'pending');
+  const [saving, setSaving] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await adminApi.updateOrder(order._id || order.id, { status });
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      console.error('Error updating order:', err);
+      alert('Error updating order: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const links = [
-    { to: '/admin',           icon: LayoutDashboard, label: 'Dashboard'  },
-    { to: '/admin/products',  icon: Package,         label: 'Products'   },
-    { to: '/admin/orders',    icon: ShoppingCart,    label: 'Orders'     },
-    { to: '/admin/customers', icon: Users,           label: 'Customers'  },
-    { to: '/',                icon: Store,           label: 'Storefront' },
-  ];
-
-  return (
-    <aside className="w-56 bg-gray-900 text-white flex flex-col shrink-0 hidden lg:flex min-h-screen">
-      {/* Logo */}
-      <div className="p-6 border-b border-white/10">
-        <Link to="/" className="text-xl font-serif font-bold tracking-[0.2em]">AEIRA</Link>
-        <p className="text-[9px] uppercase tracking-widest text-gray-500 mt-0.5">Admin Panel</p>
-      </div>
-
-      {/* Nav Links */}
-      <nav className="flex-grow px-3 py-6 space-y-1">
-        {links.map(({ to, icon: Icon, label }) => (
-          <Link
-            key={to} to={to}
-            className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              active === label
-                ? 'bg-white/15 text-white'
-                : 'text-gray-400 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon size={16} /><span>{label}</span>
-          </Link>
-        ))}
-      </nav>
-
-      {/* User + Logout */}
-      <div className="p-4 border-t border-white/10 mt-auto">
-        <div className="flex items-center space-x-3 mb-4 px-1">
-          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold uppercase">
-            {adminName[0]}
-          </div>
-          <span className="text-xs text-gray-300 truncate">{adminName}</span>
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-sm shadow-2xl rounded-sm relative">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+          <h2 className="text-xl font-serif text-gray-900">Update Order Status</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+            <X size={20} />
+          </button>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center space-x-2 px-3 py-2 w-full text-xs font-medium text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-        >
-          <LogOut size={14} /><span>Logout</span>
-        </button>
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="mb-6">
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Order ID: #{String(order?._id || order?.id).slice(-8).toUpperCase()}</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition-colors bg-white"
+            >
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors">Cancel</button>
+            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-black transition-all disabled:opacity-60">
+              <Check size={14} /> {saving ? 'Saving...' : 'Update Status'}
+            </button>
+          </div>
+        </form>
       </div>
-    </aside>
+    </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 // ====== الصفحة الرئيسية لإدارة الطلبات ======
@@ -73,6 +69,8 @@ const AdminOrders = () => {
   const [orders, setOrders]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -96,29 +94,44 @@ const AdminOrders = () => {
   );
 
   const statusColor = {
-    Delivered:  'bg-green-100 text-green-700',
-    Processing: 'bg-yellow-100 text-yellow-700',
-    Shipped:    'bg-blue-100 text-blue-700',
+    delivered:  'bg-green-100 text-green-700',
+    processing: 'bg-yellow-100 text-yellow-700',
+    shipped:    'bg-blue-100 text-blue-700',
     pending:    'bg-gray-100 text-gray-600',
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] flex">
-      <Sidebar active="Orders" />
+    <div className="min-h-screen bg-[#F9F9F9] flex relative">
+      <AdminSidebar active="Orders" isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-      <main className="flex-grow overflow-auto h-screen">
+      {selectedOrder && (
+        <UpdateStatusModal 
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)} 
+          onSuccess={loadOrders} 
+        />
+      )}
+
+      <main className="flex-grow overflow-auto h-screen w-full">
         {/* Header */}
-        <div className="border-b border-gray-200 bg-white px-8 py-4 flex items-center justify-between">
-          {/* Search */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded px-3 py-2 w-64">
-            <Search size={14} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search orders (ID, Name, Email)..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent text-xs outline-none w-full placeholder-gray-400"
-            />
+        <div className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 lg:gap-4 flex-grow">
+            <button 
+              className="lg:hidden text-gray-900 hover:text-gray-600 transition-colors shrink-0"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            <div className="flex items-center gap-2 bg-gray-100 rounded px-3 py-2 w-full max-w-md">
+              <Search size={14} className="text-gray-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Search orders..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="bg-transparent text-xs outline-none w-full placeholder-gray-400"
+              />
+            </div>
           </div>
         </div>
 
@@ -133,8 +146,8 @@ const AdminOrders = () => {
           </div>
 
           {/* Orders Table */}
-          <div className="bg-white border border-gray-100 shadow-sm rounded-sm">
-            <table className="w-full text-left">
+          <div className="bg-white border border-gray-100 shadow-sm rounded-sm overflow-x-auto">
+            <table className="w-full text-left min-w-[800px]">
               <thead className="border-b border-gray-100">
                 <tr className="text-[10px] uppercase tracking-widest text-gray-400 font-bold bg-gray-50">
                   <th className="px-6 py-4">Order ID</th>
@@ -176,8 +189,11 @@ const AdminOrders = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-gray-300 hover:text-gray-700 transition-colors p-1">
-                        <MoreVertical size={16} />
+                      <button 
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors whitespace-nowrap"
+                      >
+                        Update Status
                       </button>
                     </td>
                   </tr>

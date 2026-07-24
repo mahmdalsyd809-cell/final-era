@@ -201,7 +201,7 @@ const ProductListing = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="col-span-full text-center text-gray-500 py-10">لا توجد منتجات مطابقة للبحث</p>
+                  <p className="col-span-full text-center text-gray-500 py-10">No Products Found</p>
                 )}
               </div>
 

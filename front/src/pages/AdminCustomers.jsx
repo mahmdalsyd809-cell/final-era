@@ -1,72 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ShoppingCart, Package, Users,
-  BarChart2, Settings, LogOut, Search, Bell, Trash2, X, Store
+  BarChart2, Settings, Search, Bell, Trash2, X, Menu
 } from 'lucide-react';
 import { adminApi, getImageUrl } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-
-// ====== مكوّن Sidebar مشترك مع الداشبورد ======
-const Sidebar = ({ active }) => {
-  const navigate  = useNavigate();
-  const { userName: adminName, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const links = [
-    { to: '/admin',           icon: LayoutDashboard, label: 'Dashboard'  },
-    { to: '/admin/products',  icon: Package,         label: 'Products'   },
-    { to: '/admin/orders',    icon: ShoppingCart,    label: 'Orders'     },
-    { to: '/admin/customers', icon: Users,           label: 'Customers'  },
-    { to: '/',                icon: Store,           label: 'Storefront' },
-  ];
-
-  return (
-    <aside className="w-56 bg-gray-900 text-white flex flex-col shrink-0 hidden lg:flex min-h-screen">
-      {/* Logo */}
-      <div className="p-6 border-b border-white/10">
-        <Link to="/" className="text-xl font-serif font-bold tracking-[0.2em]">AEIRA</Link>
-        <p className="text-[9px] uppercase tracking-widest text-gray-500 mt-0.5">Admin Panel</p>
-      </div>
-
-      {/* Nav Links */}
-      <nav className="flex-grow px-3 py-6 space-y-1">
-        {links.map(({ to, icon: Icon, label }) => (
-          <Link
-            key={to} to={to}
-            className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              active === label
-                ? 'bg-white/15 text-white'
-                : 'text-gray-400 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon size={16} /><span>{label}</span>
-          </Link>
-        ))}
-      </nav>
-
-      {/* User + Logout */}
-      <div className="p-4 border-t border-white/10 mt-auto">
-        <div className="flex items-center space-x-3 mb-4 px-1">
-          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold uppercase">
-            {adminName[0]}
-          </div>
-          <span className="text-xs text-gray-300 truncate">{adminName}</span>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center space-x-2 px-3 py-2 w-full text-xs font-medium text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-        >
-          <LogOut size={14} /><span>Logout</span>
-        </button>
-      </div>
-    </aside>
-  );
-};
+import AdminSidebar from '../components/AdminSidebar';
 
 // ====== Modal لعرض طلبات عميل محدد ======
 const UserOrdersModal = ({ user, onClose }) => {
@@ -82,8 +20,8 @@ const UserOrdersModal = ({ user, onClose }) => {
         // Wait, I will just filter client side for now since admin orders isn't massive yet, 
         // OR better yet, let's fix api.js to pass params to getOrders in a moment, but for now we filter.
         // Actually I'll update api.js to support params for getOrders. I will assume it supports params:
-        const filterRes = await adminApi.getOrders({ params: { q: user.email } });
-        // The backend `q` searches email.
+        const filterRes = await adminApi.getOrders({ userId: user._id || user.id });
+        // The backend filters by the user's Object ID now.
         setOrders(filterRes.orders || filterRes || []);
       } catch (err) {
         console.error('Error fetching user orders:', err);
@@ -95,9 +33,10 @@ const UserOrdersModal = ({ user, onClose }) => {
   }, [user]);
 
   const statusColor = {
-    Delivered:  'bg-green-100 text-green-700',
-    Processing: 'bg-yellow-100 text-yellow-700',
-    Shipped:    'bg-blue-100 text-blue-700',
+    delivered:  'bg-green-100 text-green-700',
+    processing: 'bg-yellow-100 text-yellow-700',
+    shipped:    'bg-blue-100 text-blue-700',
+    pending:    'bg-gray-100 text-gray-600',
   };
 
   return (
@@ -180,6 +119,7 @@ const AdminCustomers = () => {
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState('');
   const [selectedUser, setSelectedUser] = useState(null); // لعرض المودال
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -212,26 +152,33 @@ const AdminCustomers = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] flex">
-      <Sidebar active="Customers" />
+    <div className="min-h-screen bg-[#F9F9F9] flex relative">
+      <AdminSidebar active="Customers" isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
       {selectedUser && (
         <UserOrdersModal user={selectedUser} onClose={() => setSelectedUser(null)} />
       )}
 
-      <main className="flex-grow overflow-auto h-screen">
+      <main className="flex-grow overflow-auto h-screen w-full">
         {/* Header */}
-        <div className="border-b border-gray-200 bg-white px-8 py-4 flex items-center justify-between">
-          {/* Search */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded px-3 py-2 w-64">
-            <Search size={14} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search customers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent text-xs outline-none w-full placeholder-gray-400"
-            />
+        <div className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 lg:gap-4 flex-grow">
+            <button 
+              className="lg:hidden text-gray-900 hover:text-gray-600 transition-colors shrink-0"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            <div className="flex items-center gap-2 bg-gray-100 rounded px-3 py-2 w-full max-w-md">
+              <Search size={14} className="text-gray-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Search customers..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="bg-transparent text-xs outline-none w-full placeholder-gray-400"
+              />
+            </div>
           </div>
         </div>
 
@@ -246,8 +193,8 @@ const AdminCustomers = () => {
           </div>
 
           {/* Customers Table */}
-          <div className="bg-white border border-gray-100 shadow-sm rounded-sm">
-            <table className="w-full text-left">
+          <div className="bg-white border border-gray-100 shadow-sm rounded-sm overflow-x-auto">
+            <table className="w-full text-left min-w-[800px]">
               <thead className="border-b border-gray-100">
                 <tr className="text-[10px] uppercase tracking-widest text-gray-400 font-bold bg-gray-50">
                   <th className="px-6 py-4">Name</th>

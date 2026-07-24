@@ -45,7 +45,13 @@ router.get('/products', async (req, res) => {
     // بناء فلتر البحث
     const filter = {};
 
-    if (category) filter.category = category.toLowerCase();
+    if (category) {
+      if (category.toLowerCase() === 'new') {
+        filter.isNew = true;
+      } else {
+        filter.category = category.toLowerCase();
+      }
+    }
     if (subcategory) filter.subcategory = subcategory.toLowerCase();
     if (size) filter.sizes = size; // المنتج يحتوي على هذا المقاس في مصفوفة sizes
     if (color) filter.colors = color; // المنتج يحتوي على هذا اللون في مصفوفة colors

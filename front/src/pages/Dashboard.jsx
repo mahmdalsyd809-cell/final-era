@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, DollarSign, Store } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, DollarSign, Store, Menu, X } from 'lucide-react';
 import { adminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,9 +8,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { userName, logout } = useAuth();
 
-  const [stats, setStats]           = useState({ revenue: 0, ordersCount: 0, productsCount: 0, customersCount: 0 });
+  const [stats, setStats]           = useState({ revenue: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading]       = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -38,32 +39,48 @@ const Dashboard = () => {
 
   const statCards = [
     { label: 'Revenue',   value: `$${(stats.revenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-green-600',  bg: 'bg-green-50'  },
-    { label: 'تحليلات كام order بل ارقام', value: (stats.ordersCount || 0).toLocaleString(), icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-50', link: '/admin/orders', linkLabel: 'View Orders' },
-    { label: 'Products',  value: (stats.productsCount || 0).toLocaleString(),  icon: Package,    color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Customers', value: (stats.customersCount || 0).toLocaleString(), icon: Users,      color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Orders', value: (stats.totalOrders || 0).toLocaleString(), icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-50', link: '/admin/orders', linkLabel: 'View Orders' },
+    { label: 'Products',  value: (stats.totalProducts || 0).toLocaleString(),  icon: Package,    color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Customers', value: (stats.totalUsers || 0).toLocaleString(), icon: Users,      color: 'text-orange-600', bg: 'bg-orange-50' },
   ];
 
   const statusColor = {
-    Delivered:  'bg-green-100 text-green-700',
-    Processing: 'bg-yellow-100 text-yellow-700',
-    Shipped:    'bg-blue-100 text-blue-700',
+    delivered:  'bg-green-100 text-green-700',
+    processing: 'bg-yellow-100 text-yellow-700',
+    shipped:    'bg-blue-100 text-blue-700',
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex relative">
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white flex-col hidden lg:flex">
-        <div className="p-8">
-          <Link to="/" className="text-2xl font-serif font-bold tracking-[0.2em]">AEIRA</Link>
-          <p className="text-[10px] uppercase tracking-widest text-gray-400 mt-1">Admin Panel</p>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transform transition-transform duration-300 lg:relative lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-8 flex justify-between items-center border-b border-white/10 lg:border-none">
+          <div>
+            <Link to="/" className="text-2xl font-serif font-bold tracking-[0.2em]">AEIRA</Link>
+            <p className="text-[10px] uppercase tracking-widest text-gray-400 mt-1">Admin Panel</p>
+          </div>
+          <button 
+            className="lg:hidden text-gray-400 hover:text-white"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X size={24} />
+          </button>
         </div>
 
         <nav className="flex-grow px-4 space-y-1 mt-4">
           {[
             { to: '/admin',           icon: LayoutDashboard, label: 'Dashboard' },
-            { to: '/admin/orders',    icon: ShoppingCart,    label: 'Orders'    },
             { to: '/admin/products',  icon: Package,         label: 'Products'  },
+            { to: '/admin/orders',    icon: ShoppingCart,    label: 'Orders'    },
             { to: '/admin/customers', icon: Users,           label: 'Customers' },
             { to: '/',                icon: Store,           label: 'Storefront' },
           ].map(({ to, icon: Icon, label }) => (
@@ -81,15 +98,24 @@ const Dashboard = () => {
       </aside>
 
       {/* المحتوى الرئيسي */}
-      <main className="flex-grow p-8 overflow-auto">
-        <header className="flex justify-between items-center mb-10">
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm text-gray-500">Welcome back, {userName}.</p>
+      <main className="flex-grow overflow-auto w-full relative">
+        <header className="sticky top-0 z-30 bg-gray-50 border-b border-gray-200/50 px-4 lg:px-8 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <button 
+              className="lg:hidden p-2 -ml-2 text-gray-900 hover:text-gray-600 transition-colors"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            <div>
+              <h1 className="text-xl lg:text-2xl font-serif font-bold text-gray-900">Dashboard</h1>
+              <p className="text-xs lg:text-sm text-gray-500">Welcome back, {userName}.</p>
+            </div>
           </div>
         </header>
 
-        {/* بطاقات الإحصائيات */}
+        <div className="p-4 lg:p-8">
+          {/* بطاقات الإحصائيات */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {statCards.map((card, i) => (
             <div key={i} className="bg-white p-6 shadow-sm border border-gray-100 flex flex-col justify-center space-y-4">
@@ -120,7 +146,7 @@ const Dashboard = () => {
             <Link to="/admin/orders" className="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900">View All</Link>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm min-w-[600px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
                 <tr>
                   <th className="px-6 py-4">Order ID</th>
@@ -155,6 +181,7 @@ const Dashboard = () => {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </main>
 

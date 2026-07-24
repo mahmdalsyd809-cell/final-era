@@ -222,9 +222,10 @@ router.delete('/users/:id', async (req, res) => {
  */
 router.get('/orders', async (req, res) => {
   try {
-    const { page = 1, limit = 20, status, q } = req.query;
+    const { page = 1, limit = 20, status, q, userId } = req.query;
     const filter = {};
     if (status) filter.status = status;
+    if (userId) filter.user = userId;
     if (q) filter.$or = [
       { 'customer.name': { $regex: q, $options: 'i' } },
       { 'customer.email': { $regex: q, $options: 'i' } }

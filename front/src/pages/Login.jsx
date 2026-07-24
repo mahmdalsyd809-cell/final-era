@@ -16,6 +16,7 @@ const Login = () => {
   const [name, setName]       = useState('');
   const [email, setEmail]     = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading]   = useState(false);
 
@@ -127,12 +128,26 @@ const Login = () => {
             <div className="relative">
               <label className="block text-xs font-bold uppercase tracking-widest text-gray-700 mb-2">Password</label>
               <input
-                type="password" required value={password}
+                type={showPassword ? "text" : "password"} required value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 bg-gray-50/70 border border-gray-200 focus:outline-none focus:border-gray-900 text-sm transition-colors"
               />
               <Lock className="absolute right-4 top-[38px] text-gray-400" size={18} />
+            </div>
+            
+            {/* إظهار كلمة المرور */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="show-password"
+                checked={showPassword}
+                onChange={() => setShowPassword(!showPassword)}
+                className="w-3.5 h-3.5 text-gray-900 bg-gray-100 border-gray-300 rounded cursor-pointer accent-gray-900"
+              />
+              <label htmlFor="show-password" className="ml-2 text-xs text-gray-600 cursor-pointer">
+                Show Password 
+              </label>
             </div>
 
             {/* زر الإرسال */}

@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, Users,
   BarChart2, Settings, LogOut, Plus, Search,
-  MoreVertical, AlertTriangle, Upload, X, Store,
+  MoreVertical, AlertTriangle, Upload, X, Store, Menu, Edit2
 } from 'lucide-react';
 import { adminApi, getImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import AdminSidebar from '../components/AdminSidebar';
 import fit1Url   from '../assets/fit1.jpg';
 import fit2Url   from '../assets/fit2.jpg';
 import fit3Url   from '../assets/fit3.jpg';
@@ -14,75 +16,22 @@ import coatUrl   from '../assets/coat.png';
 import dressUrl  from '../assets/formal_dress.png';
 import suitUrl   from '../assets/formal_suit.png';
 
-// ====== مكوّن Sidebar مشترك مع الداشبورد ======
-const Sidebar = ({ active }) => {
-  const navigate  = useNavigate();
-  const { userName: adminName, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const links = [
-    { to: '/admin',           icon: LayoutDashboard, label: 'Dashboard'  },
-    { to: '/admin/products',  icon: Package,         label: 'Products'   },
-    { to: '/admin/orders',    icon: ShoppingCart,    label: 'Orders'     },
-    { to: '/admin/customers', icon: Users,           label: 'Customers'  },
-    { to: '/',                icon: Store,           label: 'Storefront' },
-  ];
-
-  return (
-    <aside className="w-56 bg-gray-900 text-white flex flex-col shrink-0 hidden lg:flex">
-      {/* Logo */}
-      <div className="p-6 border-b border-white/10">
-        <Link to="/" className="text-xl font-serif font-bold tracking-[0.2em]">AEIRA</Link>
-        <p className="text-[9px] uppercase tracking-widest text-gray-500 mt-0.5">Admin Panel</p>
-      </div>
-
-      {/* Nav Links */}
-      <nav className="flex-grow px-3 py-6 space-y-1">
-        {links.map(({ to, icon: Icon, label }) => (
-          <Link
-            key={to} to={to}
-            className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              active === label
-                ? 'bg-white/15 text-white'
-                : 'text-gray-400 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon size={16} /><span>{label}</span>
-          </Link>
-        ))}
-      </nav>
-
-      {/* User + Logout */}
-      <div className="p-4 border-t border-white/10">
-        <div className="flex items-center space-x-3 mb-4 px-1">
-          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold uppercase">
-            {adminName[0]}
-          </div>
-          <span className="text-xs text-gray-300 truncate">{adminName}</span>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center space-x-2 px-3 py-2 w-full text-xs font-medium text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-        >
-          <LogOut size={14} /><span>Logout</span>
-        </button>
-      </div>
-    </aside>
-  );
-};
-
-// ====== Modal إضافة منتج جديد ======
-const AddProductModal = ({ onClose, onSuccess }) => {
+// ====== Modal إضافة منتج جديد أو تعديله ======
+const AddProductModal = ({ onClose, onSuccess, initialData = null }) => {
   const fileRef = useRef();
   const [saving, setSaving]       = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview]     = useState(null);
+  const [preview, setPreview]     = useState(initialData?.image ? getImageUrl(initialData.image) : null);
   const [imageFile, setImageFile] = useState(null); // الملف الفعلي للرفع
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(initialData ? {
+    name: initialData.name || '',
+    category: initialData.category || 'Apparel',
+    sku: String(initialData._id || initialData.id || ''),
+    price: initialData.price || '',
+    stockCount: initialData.stockCount || '',
+    description: initialData.description || '',
+    image: initialData.image || '',
+  } : {
     name: '', category: 'Apparel', sku: '',
     price: '', stockCount: '', description: '', image: '',
   });
@@ -117,7 +66,7 @@ const AddProductModal = ({ onClose, onSuccess }) => {
         setUploading(false);
       }
 
-      await adminApi.saveProduct(null, {
+      await adminApi.saveProduct(initialData?._id || initialData?.id || null, {
         name:        form.name,
         category:    form.category,
         price:       Number(form.price),
@@ -138,20 +87,16 @@ const AddProductModal = ({ onClose, onSuccess }) => {
     }
   };
 
-  // إغلاق عند الضغط خارج الـ modal
-  const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
-
   const categories = ['Apparel', 'Homewear', 'Accessories', 'Footwear', 'Outerwear', 'Suits', 'Knitwear'];
 
-  return (
+  const modalContent = (
     <div
-      onClick={handleBackdrop}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
     >
       <div className="bg-white w-full max-w-2xl shadow-2xl rounded-sm relative max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-8 pt-8 pb-6 border-b border-gray-100">
-          <h2 className="text-2xl font-serif text-gray-900">Add New Product</h2>
+          <h2 className="text-2xl font-serif text-gray-900">{initialData ? 'Edit Product' : 'Add New Product'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
             <X size={20} />
           </button>
@@ -266,14 +211,16 @@ const AddProductModal = ({ onClose, onSuccess }) => {
               type="submit" disabled={saving}
               className="flex items-center gap-2 bg-gray-900 text-white px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-black transition-all disabled:opacity-60"
             >
-              <Plus size={14} />
-              {uploading ? 'Uploading Image...' : saving ? 'Saving...' : 'Add to Collection'}
+              {initialData ? <Edit2 size={14} /> : <Plus size={14} />}
+              {uploading ? 'Uploading Image...' : saving ? 'Saving...' : initialData ? 'Update Product' : 'Add to Collection'}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 // ====== الصفحة الرئيسية لإدارة المنتجات ======
@@ -282,8 +229,17 @@ const AdminProducts = () => {
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [seeding, setSeeding]     = useState(false);
   const [seedDone, setSeedDone]   = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -340,6 +296,12 @@ const AdminProducts = () => {
     p.category?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedProducts = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const startIdx = filtered.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endIdx = Math.min(currentPage * itemsPerPage, filtered.length);
+
   // إحصائيات سريعة
   const totalInventory = products.reduce((s, p) => s + (p.stockCount || 0), 0);
   const active         = products.filter(p => p.stockCount > 0).length;
@@ -353,23 +315,34 @@ const AdminProducts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] flex">
-      <Sidebar active="Products" />
+    <div className="min-h-screen bg-[#F9F9F9] flex relative">
+      <AdminSidebar active="Products" isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
       {/* Modal */}
       {showModal && (
         <AddProductModal
-          onClose={() => setShowModal(false)}
+          initialData={editingProduct}
+          onClose={() => {
+            setShowModal(false);
+            setEditingProduct(null);
+          }}
           onSuccess={loadProducts} // بعد الإضافة تجلب المنتجات من جديد
         />
       )}
 
-      <main className="flex-grow overflow-auto">
+      <main className="flex-grow overflow-auto w-full">
         {/* Header */}
-        <div className="border-b border-gray-200 bg-white px-8 py-4 flex items-center justify-between">
-          {/* Search */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded px-3 py-2 w-64">
-            <Search size={14} className="text-gray-400" />
+        <div className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 lg:px-8 py-4 flex items-center justify-between">
+          {/* Mobile Menu Toggle & Search */}
+          <div className="flex items-center gap-2 lg:gap-4 flex-grow">
+            <button 
+              className="lg:hidden text-gray-900 hover:text-gray-600 transition-colors shrink-0"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            <div className="flex items-center gap-2 bg-gray-100 rounded px-3 py-2 w-full max-w-md">
+              <Search size={14} className="text-gray-400 shrink-0" />
             <input
               type="text"
               placeholder="Search products..."
@@ -377,23 +350,21 @@ const AdminProducts = () => {
               onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent text-xs outline-none w-full placeholder-gray-400"
             />
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="text-gray-400 hover:text-gray-700 p-2 transition-colors"><Settings size={18} /></button>
+            </div>
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-4 lg:p-8">
           {/* Page Title */}
-          <div className="flex justify-between items-start mb-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Inventory Management</p>
-              <h1 className="text-3xl font-serif text-gray-900">Product Collection</h1>
-              <p className="text-sm text-gray-400 mt-1 max-w-md">
+              <h1 className="text-2xl lg:text-3xl font-serif text-gray-900">Product Collection</h1>
+              <p className="text-xs lg:text-sm text-gray-400 mt-1 max-w-md">
                 Curation of the seasons most exclusive pieces. Review stock levels, pricing tiers, and editorial placement.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
               <button
                 onClick={seedHomeCards}
                 disabled={seeding || seedDone}
@@ -403,14 +374,17 @@ const AdminProducts = () => {
                 {seeding ? 'Seeding...' : seedDone ? 'Seeded ✓' : 'Seed Home Cards'}
               </button>
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => {
+                  setEditingProduct(null);
+                  setShowModal(true);
+                }}
                 className="flex items-center gap-2 bg-gray-900 text-white px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-black transition-all"
               >
                 <Plus size={14} /> Add New Product
               </button>
             </div>
           </div>
-
+    
           {/* Stats Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             {[
@@ -430,8 +404,8 @@ const AdminProducts = () => {
           </div>
 
           {/* Products Table */}
-          <div className="bg-white border border-gray-100 shadow-sm">
-            <table className="w-full text-left">
+          <div className="bg-white border border-gray-100 shadow-sm overflow-x-auto">
+            <table className="w-full text-left min-w-[800px]">
               <thead className="border-b border-gray-100">
                 <tr className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
                   <th className="px-6 py-4">Product Detail</th>
@@ -450,7 +424,7 @@ const AdminProducts = () => {
                   <tr>
                     <td colSpan="5" className="px-6 py-16 text-center text-gray-400 text-sm">No products found.</td>
                   </tr>
-                ) : filtered.map((product) => (
+                ) : paginatedProducts.map((product) => (
                   <tr key={product._id || product.id} className="hover:bg-gray-50 transition-colors">
                     {/* صورة واسم المنتج */}
                     <td className="px-6 py-4">
@@ -483,8 +457,14 @@ const AdminProducts = () => {
 
                     {/* أزرار التحكم */}
                     <td className="px-6 py-4">
-                      <button className="text-gray-300 hover:text-gray-700 transition-colors p-1">
-                        <MoreVertical size={16} />
+                      <button 
+                        onClick={() => {
+                          setEditingProduct(product);
+                          setShowModal(true);
+                        }}
+                        className="text-xs font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                      >
+                        <Edit2 size={14} /> Edit
                       </button>
                     </td>
                   </tr>
@@ -496,15 +476,23 @@ const AdminProducts = () => {
             {!loading && filtered.length > 0 && (
               <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest">
-                  Showing 1–{filtered.length} of {filtered.length} products
+                  Showing {startIdx}–{endIdx} of {filtered.length} products
                 </p>
                 <div className="flex gap-1">
-                  {[1, 2, 3].map(n => (
-                    <button key={n} className={`w-7 h-7 text-xs font-bold ${n === 1 ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100 transition-colors'}`}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                    <button 
+                      key={n} 
+                      onClick={() => setCurrentPage(n)}
+                      className={`w-7 h-7 text-xs font-bold ${n === currentPage ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100 transition-colors'}`}>
                       {n}
                     </button>
                   ))}
-                  <button className="w-7 h-7 text-xs text-gray-400 hover:bg-gray-100 transition-colors">›</button>
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="w-7 h-7 text-xs text-gray-400 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    ›
+                  </button>
                 </div>
               </div>
             )}

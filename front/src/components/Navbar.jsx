@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { ShoppingBag, Menu, X, LogOut, Heart, User, ChevronDown, LayoutDashboard, Camera } from 'lucide-react';
+import { ShoppingBag, Menu, X, LogOut, Heart, User, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -40,6 +40,7 @@ const Navbar = () => {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/shop', label: 'Shop' },
+    { to: '/about', label: 'About Us' },
     { to: '/product/random', label: 'Product Details' },
     { to: '/reviews', label: 'Reviews' },
    
@@ -96,15 +97,7 @@ const Navbar = () => {
               {isLoggedIn ? (
                 <>
                   {/* Image Search — hidden for admin */}
-                  {!isAdmin && (
-                    <button
-                      onClick={() => setImageSearchOpen(true)}
-                      className="relative p-2 text-gray-600 hover:text-primary transition-colors"
-                      title="Search by Image"
-                    >
-                      <Camera size={20} />
-                    </button>
-                  )}
+           
 
                   {/* Wishlist Icon — hidden for admin */}
                   {!isAdmin && (
@@ -210,13 +203,6 @@ const Navbar = () => {
               ) : (
                 /* Auth Buttons — not logged in */
                 <div className="hidden md:flex items-center space-x-2">
-                  <Link
-                    to="/login"
-                    state={{ register: true }}
-                    className="text-[10px] font-bold uppercase tracking-widest text-gray-700 border border-gray-300 px-4 py-2 hover:bg-gray-50 transition-colors"
-                  >
-                    Register
-                  </Link>
                   <Link
                     id="login-btn"
                     to="/login"
@@ -358,14 +344,6 @@ const Navbar = () => {
                 </button>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <Link
-                    to="/login"
-                    state={{ register: true }}
-                    onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center border border-gray-900 text-gray-900 py-3 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-all"
-                  >
-                    Register
-                  </Link>
                   <Link
                     id="mobile-login-btn"
                     to="/login"
